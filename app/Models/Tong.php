@@ -1,25 +1,19 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
-
 class Tong extends Model
 {
     protected $fillable = [
-        'kode', 'nama', 'lokasi', 'kapasitas', 'persen', 'status',
+        'kode', 'nama', 'lokasi', 'no_whatsapp', 'kapasitas', 'persen', 'status',
     ];
-
     public function riwayats()
     {
         return $this->hasMany(Riwayat::class);
     }
-
     public function notifikasis()
     {
         return $this->hasMany(Notifikasi::class);
     }
-
     // Label status untuk ditampilkan di view
     public function statusLabel(): string
     {
@@ -29,7 +23,6 @@ class Tong extends Model
             default        => 'Normal',
         };
     }
-
     // Warna CSS class berdasarkan status
     public function statusColor(): string
     {
