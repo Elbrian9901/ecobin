@@ -66,11 +66,21 @@
 
                 {{-- Lokasi --}}
                 @if($tong->lokasi)
-                <div class="flex items-center gap-1.5 text-xs text-[#7a9a85] mb-4">
+                <div class="flex items-center gap-1.5 text-xs text-[#7a9a85] mb-2">
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
                     </svg>
                     {{ $tong->lokasi }}
+                </div>
+                @endif
+
+                {{-- Nomor WhatsApp Pengurus --}}
+                @if($tong->no_whatsapp)
+                <div class="flex items-center gap-1.5 text-xs text-[#7a9a85] mb-4">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+                    </svg>
+                    {{ $tong->no_whatsapp }}
                 </div>
                 @endif
 
@@ -175,6 +185,25 @@
                        style="font-family:'Plus Jakarta Sans',sans-serif">
             </div>
 
+            {{-- Nomor WhatsApp Pengurus --}}
+            <div>
+                <label class="block text-sm font-semibold text-[#1a3d28] mb-1.5">
+                    Nomor WhatsApp Pengurus
+                    <span class="text-[#a8bfb0] font-normal">(contoh: 628123456789)</span>
+                </label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#7a9a85] text-sm">
+                        📱
+                    </span>
+                    <input type="text" name="no_whatsapp"
+                           placeholder="628123456789"
+                           value="{{ old('no_whatsapp') }}"
+                           class="w-full pl-10 pr-4 py-3 rounded-xl border border-[#e0e8dc] bg-[#f8fbf8] text-sm outline-none focus:border-[#22a846] focus:ring-2 focus:ring-[#22a846]/10 transition"
+                           style="font-family:'Plus Jakarta Sans',sans-serif">
+                </div>
+                <p class="text-xs text-[#a8bfb0] mt-1">Format: 62 + nomor HP (tanpa tanda +)</p>
+            </div>
+
             <div>
                 <label class="block text-sm font-semibold text-[#1a3d28] mb-1.5">Kapasitas (Liter)</label>
                 <input type="number" name="kapasitas" value="{{ old('kapasitas', 60) }}" min="1" required
@@ -195,12 +224,10 @@
 
 @push('scripts')
 <script>
-// Buka modal otomatis jika ada error validasi (setelah redirect balik)
 @if($errors->any())
     document.getElementById('modalTambah').classList.remove('hidden');
 @endif
 
-// Tutup modal saat klik backdrop
 document.getElementById('modalTambah').addEventListener('click', function(e) {
     if (e.target === this) this.classList.add('hidden');
 });

@@ -20,24 +20,26 @@ class TongController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'kode'      => ['required', 'string', 'max:20', 'unique:tongs,kode'],
-            'nama'      => ['required', 'string', 'max:100'],
-            'lokasi'    => ['nullable', 'string', 'max:150'],
-            'kapasitas' => ['required', 'integer', 'min:1'],
+            'kode'         => ['required', 'string', 'max:20', 'unique:tongs,kode'],
+            'nama'         => ['required', 'string', 'max:100'],
+            'lokasi'       => ['nullable', 'string', 'max:150'],
+            'no_whatsapp'  => ['nullable', 'string', 'max:20'],
+            'kapasitas'    => ['required', 'integer', 'min:1'],
         ], [
-            'kode.unique'    => 'Kode tong sudah digunakan.',
-            'kode.required'  => 'Kode tong wajib diisi.',
-            'nama.required'  => 'Nama tong wajib diisi.',
+            'kode.unique'        => 'Kode tong sudah digunakan.',
+            'kode.required'      => 'Kode tong wajib diisi.',
+            'nama.required'      => 'Nama tong wajib diisi.',
             'kapasitas.required' => 'Kapasitas wajib diisi.',
         ]);
 
         Tong::create([
-            'kode'      => strtoupper($request->kode),
-            'nama'      => $request->nama,
-            'lokasi'    => $request->lokasi,
-            'kapasitas' => $request->kapasitas,
-            'persen'    => 0,
-            'status'    => 'normal',
+            'kode'        => strtoupper($request->kode),
+            'nama'        => $request->nama,
+            'lokasi'      => $request->lokasi,
+            'no_whatsapp' => $request->no_whatsapp,
+            'kapasitas'   => $request->kapasitas,
+            'persen'      => 0,
+            'status'      => 'normal',
         ]);
 
         return redirect()->route('daftar-tong')
@@ -49,7 +51,6 @@ class TongController extends Controller
     {
         $tong = Tong::where('kode', $kode)->firstOrFail();
 
-        // Hapus riwayat & notifikasi terkait dulu
         Riwayat::where('tong_id', $tong->id)->delete();
         Notifikasi::where('tong_id', $tong->id)->delete();
         $tong->delete();
@@ -63,7 +64,6 @@ class TongController extends Controller
     {
         $tong = Tong::where('kode', $kode)->firstOrFail();
 
-        // Simpan ke riwayat sebelum reset
         Riwayat::create([
             'tong_id' => $tong->id,
             'jenis'   => 'pengangkutan',
@@ -71,7 +71,6 @@ class TongController extends Controller
             'waktu'   => now(),
         ]);
 
-        // Reset kapasitas & status tong
         $tong->update([
             'persen' => 0,
             'status' => 'normal',
@@ -95,7 +94,6 @@ class TongController extends Controller
             return response()->json(['error' => 'Tong tidak ditemukan'], 404);
         }
 
-        // Tentukan status
         $status = 'normal';
         if ($request->persen >= 100)    $status = 'penuh';
         elseif ($request->persen >= 80) $status = 'hampir_penuh';
@@ -105,7 +103,6 @@ class TongController extends Controller
             'status' => $status,
         ]);
 
-        // Log sensor
         Riwayat::create([
             'tong_id' => $tong->id,
             'jenis'   => 'sensor',
@@ -113,7 +110,6 @@ class TongController extends Controller
             'waktu'   => now(),
         ]);
 
-        // Notifikasi jika penuh
         if ($status === 'penuh') {
             Notifikasi::create([
                 'tong_id' => $tong->id,
