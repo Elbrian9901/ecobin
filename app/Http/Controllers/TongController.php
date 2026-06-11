@@ -6,9 +6,17 @@ use Illuminate\Http\Request;
 use App\Models\Tong;
 use App\Models\Riwayat;
 use App\Models\Notifikasi;
+use App\Services\WhatsappService;
 
 class TongController extends Controller
 {
+    protected WhatsappService $wa;
+
+    public function __construct(WhatsappService $wa)
+    {
+        $this->wa = $wa;
+    }
+
     // ── Daftar semua tong ──────────────────────────────────────────
     public function index()
     {
@@ -20,11 +28,11 @@ class TongController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'kode'         => ['required', 'string', 'max:20', 'unique:tongs,kode'],
-            'nama'         => ['required', 'string', 'max:100'],
-            'lokasi'       => ['nullable', 'string', 'max:150'],
-            'no_whatsapp'  => ['nullable', 'string', 'max:20'],
-            'kapasitas'    => ['required', 'integer', 'min:1'],
+            'kode'        => ['required', 'string', 'max:20', 'unique:tongs,kode'],
+            'nama'        => ['required', 'string', 'max:100'],
+            'lokasi'      => ['nullable', 'string', 'max:150'],
+            'no_whatsapp' => ['nullable', 'string', 'max:20'],
+            'kapasitas'   => ['required', 'integer', 'min:1'],
         ], [
             'kode.unique'        => 'Kode tong sudah digunakan.',
             'kode.required'      => 'Kode tong wajib diisi.',
@@ -32,7 +40,7 @@ class TongController extends Controller
             'kapasitas.required' => 'Kapasitas wajib diisi.',
         ]);
 
-        Tong::create([
+        $tong = Tong::create([
             'kode'        => strtoupper($request->kode),
             'nama'        => $request->nama,
             'lokasi'      => $request->lokasi,
@@ -41,6 +49,11 @@ class TongController extends Controller
             'persen'      => 0,
             'status'      => 'normal',
         ]);
+
+        // Notifikasi 1 - Kirim WA penugasan penanggung jawab
+        if ($tong->no_whatsapp) {
+            $this->wa->notifikasiPenugasan($tong);
+        }
 
         return redirect()->route('daftar-tong')
             ->with('success', 'Tong ' . strtoupper($request->kode) . ' berhasil ditambahkan.');
@@ -110,12 +123,17 @@ class TongController extends Controller
             'waktu'   => now(),
         ]);
 
+        // Notifikasi 2 - Kirim WA ketika tong penuh
         if ($status === 'penuh') {
             Notifikasi::create([
                 'tong_id' => $tong->id,
                 'tipe'    => 'penuh',
                 'pesan'   => 'Tong mencapai kapasitas penuh',
             ]);
+
+            if ($tong->no_whatsapp) {
+                $this->wa->notifikasiPenuh($tong);
+            }
         }
 
         return response()->json(['status' => 'ok', 'message' => 'Data sensor diterima']);
