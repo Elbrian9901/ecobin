@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Tong;
 use App\Models\Riwayat;
 use App\Models\Notifikasi;
+use App\Services\WhatsappService;
 use PhpMqtt\Client\MqttClient;
 use PhpMqtt\Client\ConnectionSettings;
 use PhpMqtt\Client\Exceptions\MqttClientException;
@@ -17,6 +18,14 @@ class MqttSubscriber extends Command
     protected $description = 'Subscribe to HiveMQ Cloud and process ESP32 sensor data';
 
     private const RECONNECT_DELAY = 5;
+
+    protected WhatsappService $wa;
+
+    public function __construct(WhatsappService $wa)
+    {
+        parent::__construct();
+        $this->wa = $wa;
+    }
 
     public function handle(): void
     {
@@ -117,6 +126,18 @@ class MqttSubscriber extends Command
                 'pesan'   => 'Tong ' . $kode . ' telah mencapai kapasitas penuh!',
             ]);
             $this->warn('  [NOTIF] Tong ' . $kode . ' penuh!');
+
+            // Kirim notifikasi WhatsApp ke penanggung jawab tong
+            if ($tong->no_whatsapp) {
+                $sent = $this->wa->notifikasiPenuh($tong);
+                if ($sent) {
+                    $this->info('  [WA] Notifikasi WhatsApp berhasil dikirim ke ' . $tong->no_whatsapp);
+                } else {
+                    $this->error('  [WA] Gagal mengirim notifikasi WhatsApp ke ' . $tong->no_whatsapp);
+                }
+            } else {
+                $this->warn('  [WA] Tong ' . $kode . ' tidak memiliki nomor WhatsApp, notifikasi WA dilewati.');
+            }
         }
 
         $label = match($status) {
