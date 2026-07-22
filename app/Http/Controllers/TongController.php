@@ -17,27 +17,28 @@ class TongController extends Controller
         $this->wa = $wa;
     }
 
-    // ── Daftar semua tong ──────────────────────────────────────────
+    // ── Daftar semua tong ──────────────────────────────────────
     public function index()
     {
         $tongs = Tong::orderBy('kode')->get();
         return view('daftar-tong', compact('tongs'));
     }
 
-    // ── Tambah tong baru ──────────────────────────────────────────
+    // ── Tambah tong baru ───────────────────────────────────────
     public function store(Request $request)
     {
         $request->validate([
             'kode'        => ['required', 'string', 'max:20', 'unique:tongs,kode'],
             'nama'        => ['required', 'string', 'max:100'],
             'lokasi'      => ['nullable', 'string', 'max:150'],
-            'no_whatsapp' => ['nullable', 'string', 'max:20'],
+            'no_whatsapp' => ['nullable', 'string', 'regex:/^(08[0-9]{9,11}|\+62[0-9]{9,11})$/'],
             'kapasitas'   => ['required', 'integer', 'min:1'],
         ], [
             'kode.unique'        => 'Kode tong sudah digunakan.',
             'kode.required'      => 'Kode tong wajib diisi.',
             'nama.required'      => 'Nama tong wajib diisi.',
             'kapasitas.required' => 'Kapasitas wajib diisi.',
+            'no_whatsapp.regex'  => 'Nomor WhatsApp harus diawali 08 atau +62, contoh: 081234567890.',
         ]);
 
         $tong = Tong::create([
@@ -59,7 +60,7 @@ class TongController extends Controller
             ->with('success', 'Tong ' . strtoupper($request->kode) . ' berhasil ditambahkan.');
     }
 
-    // ── Hapus tong ────────────────────────────────────────────────
+    // ── Hapus tong ──────────────────────────────────────────────
     public function destroy($kode)
     {
         $tong = Tong::where('kode', $kode)->firstOrFail();
@@ -72,7 +73,7 @@ class TongController extends Controller
             ->with('success', 'Tong ' . $kode . ' berhasil dihapus.');
     }
 
-    // ── Catat pengangkutan ────────────────────────────────────────
+    // ── Catat pengangkutan ──────────────────────────────────────
     public function catat($kode)
     {
         $tong = Tong::where('kode', $kode)->firstOrFail();
@@ -93,7 +94,7 @@ class TongController extends Controller
             ->with('success', 'Pengangkutan tong ' . $kode . ' berhasil dicatat. Kapasitas direset ke 0%.');
     }
 
-    // ── Terima data sensor ESP32 (HTTP POST) ──────────────────────
+    // ── Terima data sensor ESP32 (HTTP POST) ─────────────────────
     public function receiveSensor(Request $request)
     {
         $request->validate([

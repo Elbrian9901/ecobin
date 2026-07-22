@@ -5,7 +5,7 @@
 <div class="p-8">
     <div class="mb-8">
         <h1 class="text-[#0d2e1a] text-3xl font-extrabold">Laporan PDF</h1>
-        <p class="text-[#7a9a85] text-sm mt-1">Unduh laporan pengangkutan tong sampah dalam format PDF.</p>
+        <p class="text-[#7a9a85] text-sm mt-1">Unduh laporan riwayat &amp; keterlambatan pengangkutan tong sampah dalam format PDF.</p>
     </div>
 
     @if($errors->any())
@@ -18,7 +18,7 @@
                 <p class="text-sm font-semibold text-red-800 mb-1">Lengkapi form berikut:</p>
                 <ul class="text-sm text-red-700 space-y-0.5">
                     @foreach($errors->all() as $error)
-                        <li>• {{ $error }}</li>
+                        <li>&bull; {{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -32,101 +32,81 @@
     </div>
     @endif
 
+    {{-- Unduh Cepat per Tong (Laporan Otomatis) --}}
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-        {{-- Form download --}}
         <div class="xl:col-span-2">
             <div class="bg-white rounded-2xl shadow-sm border border-[#e5ede5] p-6">
-                <div class="flex items-center gap-3 mb-6 pb-5 border-b border-[#f0f4f0]">
-                    <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-xl bg-[#f0faf4] flex items-center justify-center">
+                        <svg class="w-5 h-5 text-[#22a846]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
                         </svg>
                     </div>
                     <div>
-                        <h2 class="font-bold text-[#0d2e1a]">Generate Laporan</h2>
-                        <p class="text-xs text-[#7a9a85]">Semua field wajib diisi sebelum mengunduh PDF</p>
+                        <h2 class="font-bold text-[#0d2e1a]">Unduh Laporan per Tong</h2>
+                        <p class="text-xs text-[#7a9a85]">Laporan otomatis 7 hari terakhir. Isi keterangan (opsional) sebelum diunduh.</p>
                     </div>
                 </div>
 
-                <form method="GET" action="{{ route('laporan.download') }}" class="space-y-5">
+                @forelse($tongs as $tong)
+                <div class="py-4 border-b border-[#f0f4f0] last:border-0">
+                    <form method="GET" action="{{ route('laporan.download') }}" class="space-y-2.5">
+                        <input type="hidden" name="dari" value="{{ now()->subDays(6)->format('Y-m-d') }}">
+                        <input type="hidden" name="sampai" value="{{ now()->format('Y-m-d') }}">
+                        <input type="hidden" name="tong_id" value="{{ $tong->kode }}">
 
-                    {{-- Rentang Tanggal --}}
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-[#1a3d28] mb-1.5">
-                                Tanggal Mulai <span class="text-red-500">*</span>
-                            </label>
-                            <input type="date" name="dari" required
-                                   value="{{ request('dari') }}"
-                                   class="w-full px-4 py-3 rounded-xl border {{ $errors->has('dari') ? 'border-red-400 bg-red-50' : 'border-[#e0e8dc] bg-[#f8fbf8]' }} text-sm outline-none focus:border-[#22a846] focus:ring-2 focus:ring-[#22a846]/10 transition">
-                            @error('dari')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="text-xs font-bold px-2 py-1 rounded-full flex-shrink-0
+                                    {{ $tong->status === 'penuh' ? 'bg-red-100 text-red-700' : ($tong->status === 'hampir_penuh' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700') }}">
+                                    {{ $tong->persen }}%
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-[#0d2e1a] truncate">{{ $tong->kode }} &ndash; {{ $tong->nama }}</p>
+                                    <p class="text-xs text-[#7a9a85] truncate">{{ $tong->lokasi ?? 'Lokasi tidak diset' }}</p>
+                                </div>
+                            </div>
+                            <button type="submit"
+                                    class="flex items-center gap-1.5 text-xs font-semibold text-[#22a846] border border-[#22a846]/30 hover:bg-[#f0faf4] px-3 py-2 rounded-xl transition whitespace-nowrap flex-shrink-0">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Unduh
+                            </button>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-[#1a3d28] mb-1.5">
-                                Tanggal Akhir <span class="text-red-500">*</span>
-                            </label>
-                            <input type="date" name="sampai" required
-                                   value="{{ request('sampai') }}"
-                                   class="w-full px-4 py-3 rounded-xl border {{ $errors->has('sampai') ? 'border-red-400 bg-red-50' : 'border-[#e0e8dc] bg-[#f8fbf8]' }} text-sm outline-none focus:border-[#22a846] focus:ring-2 focus:ring-[#22a846]/10 transition">
-                            @error('sampai')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
 
-                    {{-- Pilih Tong --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-[#1a3d28] mb-1.5">
-                            Tong Sampah <span class="text-red-500">*</span>
-                        </label>
-                        <select name="tong_id" required
-                                class="w-full px-4 py-3 rounded-xl border {{ $errors->has('tong_id') ? 'border-red-400 bg-red-50' : 'border-[#e0e8dc] bg-[#f8fbf8]' }} text-sm outline-none focus:border-[#22a846] transition">
-                            <option value="">-- Pilih Tong --</option>
-                            <option value="semua" {{ request('tong_id')==='semua' ? 'selected':'' }}>Semua Tong</option>
-                            @foreach($tongs as $tong)
-                                <option value="{{ $tong->kode }}" {{ request('tong_id')===$tong->kode ? 'selected':'' }}>
-                                    {{ $tong->kode }} – {{ $tong->nama }}
-                                    @if($tong->lokasi) ({{ $tong->lokasi }}) @endif
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('tong_id')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
-                    </div>
+                        <input type="text" name="keterangan" maxlength="500"
+                               placeholder="Keterangan (opsional, kosongkan jika tidak ada &mdash; akan diisi &quot;-&quot;)"
+                               class="w-full px-3 py-2 rounded-lg border border-[#e0e8dc] bg-[#f8fbf8] text-xs outline-none focus:border-[#22a846] focus:ring-2 focus:ring-[#22a846]/10 transition">
+                    </form>
+                </div>
+                @empty
+                <p class="text-sm text-[#7a9a85]">Belum ada tong terdaftar. Tambahkan tong dulu di menu Daftar Tong.</p>
+                @endforelse
 
-                    {{-- Jenis laporan --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-[#1a3d28] mb-1.5">
-                            Jenis Laporan <span class="text-red-500">*</span>
-                        </label>
-                        <select name="jenis" required
-                                class="w-full px-4 py-3 rounded-xl border {{ $errors->has('jenis') ? 'border-red-400 bg-red-50' : 'border-[#e0e8dc] bg-[#f8fbf8]' }} text-sm outline-none focus:border-[#22a846] transition">
-                            <option value="">-- Pilih Jenis Laporan --</option>
-                            <option value="semua"        {{ request('jenis')==='semua'        ? 'selected':'' }}>Semua (Sensor + Pengangkutan + Tong Penuh)</option>
-                            <option value="sensor"       {{ request('jenis')==='sensor'       ? 'selected':'' }}>Data Sensor</option>
-                            <option value="pengangkutan" {{ request('jenis')==='pengangkutan' ? 'selected':'' }}>Pengangkutan saja</option>
-                            <option value="tong_penuh"   {{ request('jenis')==='tong_penuh'   ? 'selected':'' }}>Peringatan Tong Penuh</option>
-                        </select>
-                        @error('jenis')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
-                    </div>
+                @if($tongs->count() > 1)
+                <div class="pt-4 mt-1 border-t border-[#f0f4f0]">
+                    <form method="GET" action="{{ route('laporan.download') }}" class="space-y-2.5">
+                        <input type="hidden" name="dari" value="{{ now()->subDays(6)->format('Y-m-d') }}">
+                        <input type="hidden" name="sampai" value="{{ now()->format('Y-m-d') }}">
+                        <input type="hidden" name="tong_id" value="semua">
 
-                    <div class="pt-2 flex gap-3">
+                        <input type="text" name="keterangan" maxlength="500"
+                               placeholder="Keterangan (opsional, kosongkan jika tidak ada &mdash; akan diisi &quot;-&quot;)"
+                               class="w-full px-3 py-2 rounded-lg border border-[#e0e8dc] bg-[#f8fbf8] text-xs outline-none focus:border-[#22a846] focus:ring-2 focus:ring-[#22a846]/10 transition">
+
                         <button type="submit"
-                                class="flex items-center gap-2 bg-[#22a846] hover:bg-[#1a8c38] text-white font-bold px-6 py-3 rounded-xl transition shadow-sm">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                            Unduh PDF
+                                class="flex items-center justify-center gap-2 w-full bg-[#22a846] hover:bg-[#1a8c38] text-white text-sm font-bold px-5 py-3 rounded-xl transition">
+                            Unduh Laporan Semua Tong (7 Hari Terakhir)
                         </button>
-                        <a href="{{ route('riwayat') }}"
-                           class="flex items-center gap-2 border border-[#e0e8dc] text-[#0d2e1a] font-semibold px-5 py-3 rounded-xl hover:bg-[#f8fbf8] transition text-sm">
-                            Lihat Riwayat
-                        </a>
-                    </div>
-                </form>
+                    </form>
+                </div>
+                @endif
             </div>
         </div>
 
@@ -156,25 +136,6 @@
                 </div>
             </div>
 
-            {{-- Daftar tong tersedia --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-[#e5ede5] p-5">
-                <h3 class="font-bold text-[#0d2e1a] text-sm mb-3">Tong Tersedia</h3>
-                @forelse($tongs as $tong)
-                <div class="flex items-center justify-between py-2 border-b border-[#f0f4f0] last:border-0">
-                    <div>
-                        <p class="text-xs font-semibold text-[#0d2e1a]">{{ $tong->kode }} – {{ $tong->nama }}</p>
-                        <p class="text-xs text-[#7a9a85]">{{ $tong->lokasi ?? 'Lokasi tidak diset' }}</p>
-                    </div>
-                    <span class="text-xs font-bold px-2 py-1 rounded-full
-                        {{ $tong->status === 'penuh' ? 'bg-red-100 text-red-700' : ($tong->status === 'hampir_penuh' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700') }}">
-                        {{ $tong->persen }}%
-                    </span>
-                </div>
-                @empty
-                <p class="text-xs text-[#7a9a85]">Belum ada tong terdaftar.</p>
-                @endforelse
-            </div>
-
             {{-- Panduan --}}
             <div class="bg-[#f0faf4] border border-[#b3ddbf] rounded-2xl p-4">
                 <div class="flex gap-3">
@@ -184,8 +145,8 @@
                     <div>
                         <p class="text-sm font-semibold text-[#1a5c36] mb-1">Cara menggunakan</p>
                         <p class="text-xs text-[#1a5c36] leading-relaxed">
-                            Isi semua field bertanda <span class="text-red-500 font-bold">*</span> terlebih dahulu, lalu klik <strong>Unduh PDF</strong>.
-                            PDF akan diunduh otomatis dalam orientasi landscape.
+                            Pilih tong, isi keterangan kalau perlu (opsional), lalu klik <strong>Unduh</strong>.
+                            Laporan otomatis mencakup periode 7 hari terakhir dari hari ini.
                         </p>
                     </div>
                 </div>
